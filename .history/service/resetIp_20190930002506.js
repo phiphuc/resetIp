@@ -127,11 +127,11 @@ function dataSwitch(data, connect){
     connect = 1;
     await dataSwitch(authenticationLoginData, connect);
     console.timeEnd('resetIp');
-    checkIp();
     } catch (error) {
         console.log(error);
         console.timeEnd('resetIp');
     }
+
     //checkIp();
 };
 

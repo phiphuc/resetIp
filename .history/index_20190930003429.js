@@ -4,7 +4,7 @@ const app = express();
 const resetIp = require('./service/resetIp');
 app.get('/reset', async (req, res) => {
     try {
-        await resetIp();
+        aw resetIp();
         return res.json({status: 0, message: 'Reset success'});
     } catch (error) {
         return res.json({status: 1, message: 'Reset fail'});

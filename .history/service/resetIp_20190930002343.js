@@ -108,31 +108,13 @@ function dataSwitch(data, connect){
 
  async function resetIp(){
     try {
-    console.time('resetIp');
-    const cookie = await getCookie();
-    let sesTokInfoData = await sesTokInfo(cookie);
-    const firstnonce = encryp.genFirstNonce().toString();
-
-    sesTokInfoData.firstnonce = firstnonce;
-
-    let challengeLoginData = await challengeLogin(cookie, sesTokInfoData);
-    challengeLoginData.firstNonce = firstnonce;
-    let encrypData = encryp.encrypData(challengeLoginData);
-    encrypData.requestverificationtoken = challengeLoginData.requestverificationtoken;
-    let authenticationLoginData = await authenticationLogin(cookie, encrypData);
-    // 1 là kết nối, 0 là ngắt kết nối.
-    let connect = 0;
-    const turnOff = await dataSwitch(authenticationLoginData, connect);
-    authenticationLoginData.requestverificationtoken = turnOff.requestverificationtoken;
-    connect = 1;
-    await dataSwitch(authenticationLoginData, connect);
-    console.timeEnd('resetIp');
-    checkIp();
+        
     } catch (error) {
-        console.log(error);
-        console.timeEnd('resetIp');
+        
     }
+
     //checkIp();
+
 };
 
 module.exports = resetIp

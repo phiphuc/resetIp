@@ -126,13 +126,13 @@ function dataSwitch(data, connect){
     authenticationLoginData.requestverificationtoken = turnOff.requestverificationtoken;
     connect = 1;
     await dataSwitch(authenticationLoginData, connect);
-    console.timeEnd('resetIp');
-    checkIp();
+    console.timeEnd('someFunction');
     } catch (error) {
-        console.log(error);
-        console.timeEnd('resetIp');
+        
     }
+
     //checkIp();
+
 };
 
 module.exports = resetIp

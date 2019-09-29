@@ -2,13 +2,14 @@ const express = require("express");
 const app = express();
 
 const resetIp = require('./service/resetIp');
-app.get('/reset', async (req, res) => {
+app.get('/reset', (req, res) => {
     try {
-        await resetIp();
-        return res.json({status: 0, message: 'Reset success'});
+        resetIp();
+
     } catch (error) {
         return res.json({status: 1, message: 'Reset fail'});
     }
+    
   });
 
 app.listen(3000, () => {

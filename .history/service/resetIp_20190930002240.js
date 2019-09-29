@@ -106,9 +106,8 @@ function dataSwitch(data, connect){
     })  
 }
 
- async function resetIp(){
-    try {
-    console.time('resetIp');
+ async  function resetIp(){
+    console.time('someFunction');
     const cookie = await getCookie();
     let sesTokInfoData = await sesTokInfo(cookie);
     const firstnonce = encryp.genFirstNonce().toString();
@@ -126,16 +125,13 @@ function dataSwitch(data, connect){
     authenticationLoginData.requestverificationtoken = turnOff.requestverificationtoken;
     connect = 1;
     await dataSwitch(authenticationLoginData, connect);
-    console.timeEnd('resetIp');
-    checkIp();
-    } catch (error) {
-        console.log(error);
-        console.timeEnd('resetIp');
-    }
+    console.timeEnd('someFunction');
+
     //checkIp();
+
 };
 
-module.exports = resetIp
+module.exports = re
 
 function checkIp(){
     request('https://api.ipgeolocation.io/ipgeo?apiKey=4879be9e54ef4fe8998c1023fb8b501a', (err, res, body) => {
