@@ -5,5 +5,6 @@ module.exports = {
     URL_CHALLENGE_LOGIN: 'http://192.168.8.1/api/user/challenge_login',
     URL_AUTHEN_LOGIN: 'http://192.168.8.1/api/user/authentication_login',
     URL_DATA_SWITCH: 'http://192.168.8.1/api/dialup/mobile-dataswitch',
+    URL_GET_IP: 'http://api.ipify.org/',
     PWS: 'admin123'
 }

@@ -10,10 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "crypto-js": "^3.1.9-1",
+    "exceljs": "^4.0.1",
     "express": "^4.17.1",
     "js2xmlparser": "^4.0.0",
-    "jsdom": "^15.1.1",
+    "jsdom": "^15.2.1",
+    "node-xlsx": "^0.15.0",
     "request": "^2.88.0",
+    "xlsx": "^0.16.2",
     "xml2js": "^0.4.22"
   }
 }

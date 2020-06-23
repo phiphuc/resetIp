@@ -2,14 +2,18 @@ const request = require('request');
 const js2xmlparser = require("js2xmlparser");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
+var http = require('http');
 
-const constants = require('../constants/constans');
+const utils = require('../Utils/utils');
 const encryp = require('../lib/encryption');
 function getCookie(){
     return new Promise((res, rej) => {
-        request(constants.URL_HOME, (err, response, body) => {
+        request(utils.URL_HOME, (err, response, body) => {
             if(err) return rej(err);
-            return res(response.headers['set-cookie'][0]);
+            const dom = new JSDOM(body);
+            // đoạn này cần check bên tool wifi có null không. đây đang viết cho dcom 4g 
+            const csrf= dom.window.document.getElementsByName('csrf_token')[1].content;
+            return res({cookie: response.headers['set-cookie'][0], csrf: csrf});
         })
     })
 }
@@ -17,10 +21,10 @@ function getCookie(){
 function sesTokInfo(cookie){
     const headers = {
         Cookie: cookie,
-        'User-Agent': constants.User_Agent_Value
+        'User-Agent': utils.User_Agent_Value
     }
     return new Promise((res, rej) => {
-        request({url:constants.URL_SES_TOK_INFO, headers}, (err, response, body) => {
+        request({url:utils.URL_SES_TOK_INFO, headers}, (err, response, body) => {
             if(err) return rej(err);
             const dom = new JSDOM(body);
             const result = {
@@ -35,7 +39,7 @@ function sesTokInfo(cookie){
 function challengeLogin(cookie, data){
     const headers = {
         'Cookie': cookie,
-        'User-Agent': constants.User_Agent_Value,
+        'User-Agent': utils.User_Agent_Value,
         '__RequestVerificationToken': data.TokInfo,
         'Content-Type':'application/x-www-form-urlencoded'
     }
@@ -43,7 +47,7 @@ function challengeLogin(cookie, data){
     const body ='<?xml version="1.0" encoding="UTF-8"?><request><username>admin</username><firstnonce>'+data.firstnonce+'</firstnonce><mode>1</mode></request>';
 
     return new Promise((res, rej) => {
-        request({url:constants.URL_CHALLENGE_LOGIN, headers, body, method: 'POST'}, (err, response, body) => {
+        request({url:utils.URL_CHALLENGE_LOGIN, headers, body, method: 'POST'}, (err, response, body) => {
             if(err) return rej(err);
             const dom = new JSDOM(body);
             if(dom.window.document.querySelector("error") !== null){
@@ -67,14 +71,14 @@ function challengeLogin(cookie, data){
 function authenticationLogin(cookie, data){
     const headers = {
         'Cookie': cookie,
-        'User-Agent': constants.User_Agent_Value,
+        'User-Agent': utils.User_Agent_Value,
         '__RequestVerificationToken': data.requestverificationtoken,
         'Content-Type':'application/x-www-form-urlencoded'
     }
 
     const body = '<?xml version="1.0" encoding="UTF-8"?><request><clientproof>'+data.clientProof+'</clientproof><finalnonce>'+data.finalNonce+'</finalnonce></request>'
     return new Promise((res, rej) => {
-        request({url:constants.URL_AUTHEN_LOGIN, headers, body, method: 'POST'}, (err, response, body) => {
+        request({url:utils.URL_AUTHEN_LOGIN, headers, body, method: 'POST'}, (err, response, body) => {
             if(err) return rej(err);
             const dom = new JSDOM(body);
             const result = {
@@ -89,13 +93,13 @@ function authenticationLogin(cookie, data){
 function dataSwitch(data, connect){
     const headers = {
         'Cookie': data.cookie,
-        'User-Agent': constants.User_Agent_Value,
+        'User-Agent': utils.User_Agent_Value,
         '__RequestVerificationToken': data.requestverificationtoken,
         'Content-Type':'application/x-www-form-urlencoded'
     }
     const body = '<?xml version="1.0" encoding="UTF-8"?><request><dataswitch>'+connect+'</dataswitch></request>'
     return new Promise((res, rej) => {
-        request({url:constants.URL_DATA_SWITCH, headers, body, method: 'POST'}, (err, response, body) => {
+        request({url:utils.URL_DATA_SWITCH, headers, body, method: 'POST'}, (err, response, body) => {
             if(err) return rej(err);
             const dom = new JSDOM(body);
             const result = {
@@ -107,19 +111,32 @@ function dataSwitch(data, connect){
 }
 
  async function resetIp(){
+     // tạm harcode để test case 4g
+     const _isDcom = true;
+     let ip  = "";
     try {
     console.time('resetIp');
-    const cookie = await getCookie();
-    let sesTokInfoData = await sesTokInfo(cookie);
-    const firstnonce = encryp.genFirstNonce().toString();
+    const dataHome = await getCookie();
 
-    sesTokInfoData.firstnonce = firstnonce;
-
-    let challengeLoginData = await challengeLogin(cookie, sesTokInfoData);
-    challengeLoginData.firstNonce = firstnonce;
-    let encrypData = encryp.encrypData(challengeLoginData);
-    encrypData.requestverificationtoken = challengeLoginData.requestverificationtoken;
-    let authenticationLoginData = await authenticationLogin(cookie, encrypData);
+    const cookie = dataHome.cookie;
+    const csrf = dataHome.csrf;
+    let authenticationLoginData = {
+        cookie: dataHome.cookie,
+        requestverificationtoken: csrf
+    }
+    if(!_isDcom){
+        let sesTokInfoData = await sesTokInfo(cookie);
+        const firstnonce = encryp.genFirstNonce().toString();
+    
+        sesTokInfoData.firstnonce = firstnonce;
+    
+        let challengeLoginData = await challengeLogin(cookie, sesTokInfoData);
+        challengeLoginData.firstNonce = firstnonce;
+        let encrypData = encryp.encrypData(challengeLoginData);
+        encrypData.requestverificationtoken = challengeLoginData.requestverificationtoken;
+        authenticationLoginData = await authenticationLogin(cookie, encrypData);
+    }
+    
     // 1 là kết nối, 0 là ngắt kết nối.
     let connect = 0;
     const turnOff = await dataSwitch(authenticationLoginData, connect);
@@ -127,18 +144,35 @@ function dataSwitch(data, connect){
     connect = 1;
     await dataSwitch(authenticationLoginData, connect);
     console.timeEnd('resetIp');
-    checkIp();
+    await sleep(3000);
+    ip = await checkIp();
     } catch (error) {
-        console.log(error);
+        console.log("LOI :"+error);
         console.timeEnd('resetIp');
     }
-    //checkIp();
+    return ip;
 };
 
-module.exports = resetIp
-
-function checkIp(){
-    request('https://api.ipgeolocation.io/ipgeo?apiKey=4879be9e54ef4fe8998c1023fb8b501a', (err, res, body) => {
-        console.log(JSON.parse(body).ip)
+let count = 0;
+ function checkIp(){
+   return new Promise((res, rej) => {
+    request('http://api.ipify.org/', (err, response, body) => {
+        if(err){console.log(err); return rej(err)}
+        try{
+            if(!body.includes('error')){
+                count +=1;
+            }
+            console.log(count+ " : " +body);
+        }catch(err){
+            console.log("Lỗi: "+err);
+        }
+        return res(body);
     })
+   })
 }
+
+async function sleep(msec) {
+    return new Promise(resolve => setTimeout(resolve, msec));
+}
+
+module.exports = resetIp
