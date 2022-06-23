@@ -13,7 +13,7 @@
     "exceljs": "^4.0.1",
     "express": "^4.17.1",
     "js2xmlparser": "^4.0.0",
-    "jsdom": "^15.2.1",
+    "jsdom": "^16.5.0",
     "node-xlsx": "^0.15.0",
     "request": "^2.88.0",
     "xlsx": "^0.16.2",
